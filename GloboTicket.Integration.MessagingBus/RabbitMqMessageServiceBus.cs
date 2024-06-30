@@ -25,7 +25,7 @@ namespace GloboTicket.Integration.MessagingBus
         public void PublishMessage(IntegrationBaseMessage message, string topicName, string queueName ,string routingkey)
         {
             _client.ExchangeDeclare(topicName, type: ExchangeType.Topic);
-            _client.QueueDeclare(routingkey, true, false, false, null);
+            _client.QueueDeclare(queueName, true, false, false, null);
             _client.QueueBind(queueName, topicName, routingkey);
             var properties = _client.CreateBasicProperties();
             properties.CorrelationId = Guid.NewGuid().ToString();
