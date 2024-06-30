@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
 
-namespace GloboTicket.Services.Ordering.Extensions
+namespace GloboTicket.Integration
 {
     public static class Serializer<T> where T : class
     {

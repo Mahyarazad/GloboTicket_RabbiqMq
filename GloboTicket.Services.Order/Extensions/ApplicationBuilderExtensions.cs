@@ -9,7 +9,7 @@ namespace GloboTicket.Services.Ordering.Extensions
     {
         public static IRabbitMqConsumer ServiceBusConsumer { get; set; }
 
-        public static IApplicationBuilder UseAzServiceBusConsumer(this IApplicationBuilder app)
+        public static IApplicationBuilder UseRabbitMqService(this IApplicationBuilder app)
         {
             ServiceBusConsumer = app.ApplicationServices.GetService<IRabbitMqConsumer>();
             var hostApplicationLifetime = app.ApplicationServices.GetService<IHostApplicationLifetime>();

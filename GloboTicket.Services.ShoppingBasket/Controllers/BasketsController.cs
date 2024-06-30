@@ -134,7 +134,7 @@ namespace GloboTicket.Services.ShoppingBasket.Controllers
 
                 try
                 {
-                    await messageBus.PublishMessage(basketCheckoutMessage, "checkoutmessage");
+                    messageBus.PublishMessage(basketCheckoutMessage, "GloboTicket_Topic", "payment.*");
                 }
                 catch (Exception e)
                 {

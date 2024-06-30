@@ -1,44 +1,40 @@
-﻿using GloboTicket.Integration.MessagingBus;
-using GloboTicket.Services.Ordering.Entities;
+﻿using GloboTicket.Services.Ordering.Entities;
+using GloboTicket.Services.Ordering.Extensions;
 using GloboTicket.Services.Ordering.Messages;
 using GloboTicket.Services.Ordering.Repositories;
 
 
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System;
-using System.Text;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace GloboTicket.Services.Ordering.Messaging
 {
-    public class RabbitMQConsumer: IRabbitMqConsumer
+    public class RabbitMqConsumer: IRabbitMqConsumer
     {
         private readonly string subscriptionName = "globoticketorder";
-        //private readonly IReceiverClient checkoutMessageReceiverClient;
-        //private readonly IReceiverClient orderPaymentUpdateMessageReceiverClient;
+
         private readonly IConnection _connection;
-        private readonly IModel orderPaymentUpdateMessageReceiverClient;
-        private readonly IModel checkoutMessageReceiverClient;
-
+        private readonly IModel orderPaymentUpdateMessageClient;
+        private readonly IModel checkoutMessageClient;
+        private readonly EventingBasicConsumer orderPaymentUpdateConsumer;
+        private readonly EventingBasicConsumer checkoutMessageConsumer;
         private readonly IConfiguration _configuration;
-
+        private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly OrderRepository _orderRepository;
-        private readonly IMessageBus _messageBus;
 
         private readonly string checkoutMessageTopic;
         private readonly string orderPaymentRequestMessageTopic;
-        private readonly string orderPaymentUpdatedMessageTopic;
+        //private readonly string orderPaymentUpdatedMessageTopic;
 
-        public RabbitMQConsumer(IConfiguration configuration, OrderRepository orderRepository)
+        public RabbitMqConsumer(IConfiguration configuration, OrderRepository orderRepository)
         {
             _configuration = configuration;
             _orderRepository = orderRepository;
-            // _logger = logger;
-            //_messageBus = messageBus;
+
 
             var connectionFactory = new ConnectionFactory()
             {
@@ -46,39 +42,52 @@ namespace GloboTicket.Services.Ordering.Messaging
                 UserName = _configuration["RabbitMq:Username"],
                 Password = _configuration["RabbitMq:Password"],
             };
-
+            _cancellationTokenSource = new CancellationTokenSource();
             _connection = connectionFactory.CreateConnection();
-            orderPaymentUpdateMessageReceiverClient = _connection.CreateModel();
-            checkoutMessageReceiverClient = _connection.CreateModel();
+            orderPaymentUpdateMessageClient = _connection.CreateModel();
+            checkoutMessageClient = _connection.CreateModel();
 
-            orderPaymentUpdateMessageReceiverClient.ExchangeDeclare(exchange: _configuration.GetValue<string>("Topic_Name"), type: ExchangeType.Topic);
-            checkoutMessageReceiverClient.ExchangeDeclare(exchange: _configuration.GetValue<string>("Topic_Name"), type: ExchangeType.Topic);
+            checkoutMessageClient.ExchangeDeclare(exchange: _configuration.GetValue<string>("Topic_Name"), type: ExchangeType.Topic);
+            orderPaymentUpdateMessageClient.ExchangeDeclare(exchange: _configuration.GetValue<string>("Topic_Name"), type: ExchangeType.Topic);
 
-            //var serviceBusConnectionString = _configuration.GetValue<string>("ServiceBusConnectionString");
+
             checkoutMessageTopic = _configuration.GetValue<string>("CheckoutMessageTopic");
             orderPaymentRequestMessageTopic = _configuration.GetValue<string>("OrderPaymentRequestMessageTopic");
 
+            checkoutMessageClient.QueueDeclare(checkoutMessageTopic, true, false, false, null);
+            checkoutMessageClient.QueueBind(checkoutMessageTopic, _configuration.GetValue<string>("Topic_Name"), "payment.*");
+            orderPaymentUpdateMessageClient.QueueDeclare(orderPaymentRequestMessageTopic, true, false,false , null);
+            orderPaymentUpdateMessageClient.QueueBind(orderPaymentRequestMessageTopic, _configuration.GetValue<string>("Topic_Name"), "payment.order");
 
-            orderPaymentUpdateMessageReceiverClient.QueueDeclare(orderPaymentRequestMessageTopic, true, false,false , null);
-            checkoutMessageReceiverClient.QueueDeclare(checkoutMessageTopic, true, false, false, null);
-            //checkoutMessageReceiverClient = new SubscriptionClient(serviceBusConnectionString, checkoutMessageTopic, subscriptionName);
-            //orderPaymentUpdateMessageReceiverClient = new SubscriptionClient(serviceBusConnectionString, orderPaymentUpdatedMessageTopic, subscriptionName);
+            checkoutMessageConsumer = new EventingBasicConsumer(checkoutMessageClient);
+            orderPaymentUpdateConsumer = new EventingBasicConsumer(orderPaymentUpdateMessageClient);
+
+
         }
 
         public void Start()
         {
-            var messageHandlerOptions = new MessageHandlerOptions(OnServiceBusException) { MaxConcurrentCalls = 4 };
 
-            checkoutMessageReceiverClient.RegisterMessageHandler(OnCheckoutMessageReceived, messageHandlerOptions);
-            orderPaymentUpdateMessageReceiverClient.RegisterMessageHandler(OnOrderPaymentUpdateReceived, messageHandlerOptions);
+            checkoutMessageConsumer.Received += async (sender, arg) =>
+            {
+                var message = Serializer<BasketCheckoutMessage>.Deserialize(arg.Body.ToArray());
+                await OnCheckoutMessageReceived(message, _cancellationTokenSource.Token);
+            };
+
+            checkoutMessageClient.BasicConsume(checkoutMessageTopic, true, checkoutMessageConsumer);
+
+            orderPaymentUpdateConsumer.Received += async (sender, arg) =>
+            {
+                var message = Serializer<OrderPaymentUpdateMessage>.Deserialize(arg.Body.ToArray());
+                await OnOrderPaymentUpdateReceived(message, _cancellationTokenSource.Token);
+            };
+
+            orderPaymentUpdateMessageClient.BasicConsume(orderPaymentRequestMessageTopic, true, orderPaymentUpdateConsumer);
+
         }
 
-        private async Task OnCheckoutMessageReceived(Message message, CancellationToken arg2)
+        private async Task OnCheckoutMessageReceived(BasketCheckoutMessage basketCheckoutMessage, CancellationToken arg2)
         {
-            var body = Encoding.UTF8.GetString(message.Body);//json from service bus
-
-            //save order with status not paid
-            BasketCheckoutMessage basketCheckoutMessage = JsonConvert.DeserializeObject<BasketCheckoutMessage>(body);
 
             Guid orderId = Guid.NewGuid();
 
@@ -105,7 +114,8 @@ namespace GloboTicket.Services.Ordering.Messaging
 
             try
             {
-                await _messageBus.PublishMessage(orderPaymentRequestMessage, orderPaymentRequestMessageTopic);
+                checkoutMessageClient.BasicPublish(_configuration.GetValue<string>("Topic_Name"), checkoutMessageTopic, null
+                    , Serializer<OrderPaymentRequestMessage>.Serialize(orderPaymentRequestMessage));
             }
             catch (Exception e)
             {
@@ -114,20 +124,9 @@ namespace GloboTicket.Services.Ordering.Messaging
             }
         }
 
-        private async Task OnOrderPaymentUpdateReceived(Message message, CancellationToken arg2)
+        private async Task OnOrderPaymentUpdateReceived(OrderPaymentUpdateMessage message, CancellationToken arg2)
         {
-            var body = Encoding.UTF8.GetString(message.Body);//json from service bus
-            OrderPaymentUpdateMessage orderPaymentUpdateMessage =
-                JsonConvert.DeserializeObject<OrderPaymentUpdateMessage>(body);
-
-            await _orderRepository.UpdateOrderPaymentStatus(orderPaymentUpdateMessage.OrderId, orderPaymentUpdateMessage.PaymentSuccess);
-        }
-
-        private Task OnServiceBusException(ExceptionReceivedEventArgs exceptionReceivedEventArgs)
-        {
-            Console.WriteLine(exceptionReceivedEventArgs);
-
-            return Task.CompletedTask;
+            await _orderRepository.UpdateOrderPaymentStatus(message.OrderId, message.PaymentSuccess);
         }
 
         public void Stop()

@@ -1,14 +1,15 @@
-﻿using GloboTicket.Integration.MessagingBus;
+﻿using GloboTicket.Integration;
+using GloboTicket.Integration.MessagingBus;
 using GloboTicket.Services.Payment.Messages;
 using GloboTicket.Services.Payment.Model;
 using GloboTicket.Services.Payment.Services;
-using Microsoft.Azure.ServiceBus;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,9 +19,12 @@ namespace GloboTicket.Services.Payment.Worker
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private ISubscriptionClient subscriptionClient;
-        private readonly IExternalGatewayPaymentService externalGatewayPaymentService;
+        private readonly IConnection _connection;
+        private readonly IModel _client;
+        private readonly EventingBasicConsumer _eventListiner;
         private readonly IMessageBus messageBus;
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly IExternalGatewayPaymentService externalGatewayPaymentService;
         private readonly string orderPaymentUpdatedMessageTopic;
 
         public ServiceBusListener(IConfiguration configuration, ILoggerFactory loggerFactory, IExternalGatewayPaymentService externalGatewayPaymentService, IMessageBus messageBus)
@@ -31,23 +35,32 @@ namespace GloboTicket.Services.Payment.Worker
             this.configuration = configuration;
             this.externalGatewayPaymentService = externalGatewayPaymentService;
             this.messageBus = messageBus;
+
+            var connectionFactory = new ConnectionFactory()
+            {
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest"
+            };
+
+            _connection = connectionFactory.CreateConnection();
+            _client = _connection.CreateModel();
+            _client.ExchangeDeclare(configuration.GetValue<string>("Topic_Name"), type: ExchangeType.Topic);
+            _client.QueueDeclare(orderPaymentUpdatedMessageTopic, true, false, false, null);
+            _client.QueueBind(orderPaymentUpdatedMessageTopic, configuration.GetValue<string>("Topic_Name"), "payment.order");
+            _eventListiner = new EventingBasicConsumer(_client);
+            
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            subscriptionClient = new SubscriptionClient(configuration.GetValue<string>("ServiceBusConnectionString"), configuration.GetValue<string>("OrderPaymentRequestMessageTopic"), configuration.GetValue<string>("subscriptionName"));
 
-            var messageHandlerOptions = new MessageHandlerOptions(e =>
+            _eventListiner.Received += async (s, a) =>
             {
-                ProcessError(e.Exception);
-                return Task.CompletedTask;
-            })
-            {
-                MaxConcurrentCalls = 3,
-                AutoComplete = false
+                await ProcessMessageAsync(Serializer<OrderPaymentRequestMessage>.Deserialize(a.Body.ToArray()),a.DeliveryTag, _cancellationTokenSource.Token);
             };
 
-            subscriptionClient.RegisterMessageHandler(ProcessMessageAsync, messageHandlerOptions);
+            _client.BasicConsume(orderPaymentUpdatedMessageTopic, true, _eventListiner);
 
             return Task.CompletedTask;
         }
@@ -55,7 +68,7 @@ namespace GloboTicket.Services.Payment.Worker
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             logger.LogDebug($"ServiceBusListener stopping.");
-            await this.subscriptionClient.CloseAsync();
+            this._client.Dispose();
         }
 
         protected void ProcessError(Exception e)
@@ -63,10 +76,8 @@ namespace GloboTicket.Services.Payment.Worker
             logger.LogError(e, "Error while processing queue item in ServiceBusListener.");
         }
 
-        protected async Task ProcessMessageAsync(Message message, CancellationToken token)
+        protected async Task ProcessMessageAsync(OrderPaymentRequestMessage orderPaymentRequestMessage, ulong deliveryTag ,CancellationToken token)
         {
-            var messageBody = Encoding.UTF8.GetString(message.Body);
-            OrderPaymentRequestMessage orderPaymentRequestMessage = JsonConvert.DeserializeObject<OrderPaymentRequestMessage>(messageBody);
 
             PaymentInfo paymentInfo = new PaymentInfo
             {
@@ -78,7 +89,7 @@ namespace GloboTicket.Services.Payment.Worker
 
             var result = await externalGatewayPaymentService.PerformPayment(paymentInfo);
 
-            await subscriptionClient.CompleteAsync(message.SystemProperties.LockToken);
+            _client.BasicAck(deliveryTag, false);
 
             //send payment result to order service via service bus
             OrderPaymentUpdateMessage orderPaymentUpdateMessage = new OrderPaymentUpdateMessage
@@ -89,7 +100,7 @@ namespace GloboTicket.Services.Payment.Worker
 
             try
             {
-                await messageBus.PublishMessage(orderPaymentUpdateMessage, orderPaymentUpdatedMessageTopic);
+                messageBus.PublishMessage(orderPaymentUpdateMessage, configuration.GetValue<string>("Topic_Name"), "payment.order");
             }
             catch (Exception e)
             {

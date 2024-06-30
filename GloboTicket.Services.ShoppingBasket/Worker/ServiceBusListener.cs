@@ -1,62 +1,71 @@
-﻿using GloboTicket.Integration.MessagingBus;
-using GloboTicket.Services.ShoppingBasket.Models;
+﻿using GloboTicket.Services.ShoppingBasket.Models;
 using GloboTicket.Services.ShoppingBasket.Repositories;
-using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
+using RabbitMQ.Client.Events;
+using RabbitMQ.Client;
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using GloboTicket.Integration;
 
 namespace GloboTicket.Services.ShoppingBasket.Worker
 {
     public class ServiceBusListener : IHostedService
     {
         private readonly IConfiguration configuration;
-        private ISubscriptionClient subscriptionClient;
+        private readonly IConnection _connection;
+        private readonly IModel _client;
+        private readonly EventingBasicConsumer _eventListiner;
         private readonly BasketLinesIntegrationRepository basketLinesRepository;
-
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly string priceUpdatedMessageTopic;
         public ServiceBusListener(IConfiguration configuration, BasketLinesIntegrationRepository basketLinesRepository)
         {
             this.configuration = configuration;
             this.basketLinesRepository = basketLinesRepository;
+            priceUpdatedMessageTopic = configuration.GetValue<string>("PriceUpdatedMessageTopic");
+            var connectionFactory = new ConnectionFactory()
+            {
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest"
+            };
+
+            _connection = connectionFactory.CreateConnection();
+            _client = _connection.CreateModel();
+            _client.ExchangeDeclare(configuration.GetValue<string>("Topic_Name"), type: ExchangeType.Topic);
+            _client.QueueDeclare(priceUpdatedMessageTopic, true, false, false, null);
+            _client.QueueBind(priceUpdatedMessageTopic, configuration.GetValue<string>("Topic_Name"), "payment.*");
+            _eventListiner = new EventingBasicConsumer(_client);
+            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            subscriptionClient = new SubscriptionClient(configuration.GetValue<string>("ServiceBusConnectionString"), configuration.GetValue<string>("PriceUpdatedMessageTopic"), configuration.GetValue<string>("subscriptionName"));
 
-            var messageHandlerOptions = new MessageHandlerOptions(e =>
+            _eventListiner.Received += async (s, a) =>
             {
-                ProcessError(e.Exception);
-                return Task.CompletedTask;
-            })
-            {
-                MaxConcurrentCalls = 3,
-                AutoComplete = false
+                await ProcessMessageAsync(Serializer<PriceUpdate>.Deserialize(a.Body.ToArray()), a.DeliveryTag, _cancellationTokenSource.Token);
             };
 
-            subscriptionClient.RegisterMessageHandler(ProcessMessageAsync, messageHandlerOptions);
+            _client.BasicConsume(priceUpdatedMessageTopic, true, _eventListiner);
 
             return Task.CompletedTask;
         }
 
-        private async Task ProcessMessageAsync(Message message, CancellationToken token)
+        private async Task ProcessMessageAsync(PriceUpdate message, ulong deliveryTag ,CancellationToken token)
         {
-            var messageBody = Encoding.UTF8.GetString(message.Body);
-            PriceUpdate priceUpdate = JsonConvert.DeserializeObject<PriceUpdate>(messageBody);
 
-            await basketLinesRepository.UpdatePricesForIntegrationEvent(priceUpdate);
+            await basketLinesRepository.UpdatePricesForIntegrationEvent(message);
 
-            await subscriptionClient.CompleteAsync(message.SystemProperties.LockToken);
+            //_client.BasicAck(deliveryTag, false);
 
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            await this.subscriptionClient.CloseAsync();
+            _client.Dispose();
         }
 
         protected void ProcessError(Exception e)

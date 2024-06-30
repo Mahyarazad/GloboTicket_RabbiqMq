@@ -36,20 +36,20 @@ namespace GloboTicket.Services.Ordering
 
             services.AddScoped<IOrderRepository, OrderRepository>();
 
-            //Specific DbContext for use from singleton RabbitMQConsumer
+            //Specific DbContext for use from singleton RabbitMqConsumer
             var optionsBuilder = new DbContextOptionsBuilder<OrderDbContext>();
             optionsBuilder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
 
             services.AddSingleton(new OrderRepository(optionsBuilder.Options));
 
-            services.AddSingleton<IMessageBus, AzServiceBusMessageBus>();
+            services.AddSingleton<IMessageBus, RabbitMqMessageServiceBus>();
 
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Ordering API", Version = "v1" });
             });
 
-            services.AddSingleton<IRabbitMqConsumer, RabbitMQConsumer>();
+            services.AddSingleton<IRabbitMqConsumer, RabbitMqConsumer>();
 
             services.AddControllers();
         }
@@ -83,7 +83,7 @@ namespace GloboTicket.Services.Ordering
                 endpoints.MapControllers();
             });
 
-            app.UseAzServiceBusConsumer();
+            app.UseRabbitMqService();
 
 
         }

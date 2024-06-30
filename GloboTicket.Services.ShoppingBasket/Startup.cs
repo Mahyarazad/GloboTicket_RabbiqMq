@@ -45,7 +45,7 @@ namespace GloboTicket.Services.ShoppingBasket
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IBasketChangeEventRepository, BasketChangeEventRepository>();
 
-            services.AddSingleton<IMessageBus, AzServiceBusMessageBus>();
+            services.AddSingleton<IMessageBus, RabbitMqMessageServiceBus>();
 
             services.AddHttpClient<IEventCatalogService, EventCatalogService>(c =>
                 c.BaseAddress = new Uri(Configuration["ApiConfigs:EventCatalog:Uri"]));
@@ -64,6 +64,7 @@ namespace GloboTicket.Services.ShoppingBasket
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Shopping Basket API", Version = "v1" });
             });
+            
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
