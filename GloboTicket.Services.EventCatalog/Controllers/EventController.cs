@@ -57,7 +57,7 @@ namespace GloboTicket.Services.EventCatalog.Controllers
 
             try
             {
-                messageBus.PublishMessage(priceUpdatedMessage, "GloboTicket_Topic", "price.*");
+                messageBus.PublishMessage(priceUpdatedMessage, "GloboTicket_Topic", "priceupdatedmessage", "price.*");
             }
             catch (Exception e)
             {

@@ -100,7 +100,7 @@ namespace GloboTicket.Services.Payment.Worker
 
             try
             {
-                messageBus.PublishMessage(orderPaymentUpdateMessage, configuration.GetValue<string>("Topic_Name"), "payment.order");
+                messageBus.PublishMessage(orderPaymentUpdateMessage, configuration.GetValue<string>("Topic_Name"), "orderpaymentrequestmessage", "payment.order");
             }
             catch (Exception e)
             {

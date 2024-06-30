@@ -62,7 +62,6 @@ namespace GloboTicket.Services.Ordering.Messaging
             checkoutMessageConsumer = new EventingBasicConsumer(checkoutMessageClient);
             orderPaymentUpdateConsumer = new EventingBasicConsumer(orderPaymentUpdateMessageClient);
 
-
         }
 
         public void Start()

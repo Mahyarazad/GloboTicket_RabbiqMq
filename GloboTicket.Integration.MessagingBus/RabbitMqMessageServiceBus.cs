@@ -14,6 +14,7 @@ namespace GloboTicket.Integration.MessagingBus
             var connectionFactory = new ConnectionFactory()
             {
                 HostName = "localhost",
+                Port = 5672,
                 UserName = "guest",
                 Password = "guest"
             };
@@ -21,11 +22,11 @@ namespace GloboTicket.Integration.MessagingBus
             _connection = connectionFactory.CreateConnection();
             _client = _connection.CreateModel();
         }
-        public void PublishMessage(IntegrationBaseMessage message, string topicName, string routingkey, string bindingKey)
+        public void PublishMessage(IntegrationBaseMessage message, string topicName, string queueName ,string routingkey)
         {
             _client.ExchangeDeclare(topicName, type: ExchangeType.Topic);
-            //_client.QueueDeclare(routingkey, true, false, false, null);
-            //_client.QueueBind(routingkey, topicName, "payment.*");
+            _client.QueueDeclare(routingkey, true, false, false, null);
+            _client.QueueBind(queueName, topicName, routingkey);
             var properties = _client.CreateBasicProperties();
             properties.CorrelationId = Guid.NewGuid().ToString();
 

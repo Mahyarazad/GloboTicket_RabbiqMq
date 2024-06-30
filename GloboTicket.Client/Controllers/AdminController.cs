@@ -38,7 +38,7 @@ namespace GloboTicket.Web.Controllers
 
             PriceUpdate priceUpdate = new PriceUpdate() { EventId = eventPriceUpdateViewModel.EventId, Price = eventPriceUpdateViewModel.Price };
             await eventCatalogService.UpdatePrice(priceUpdate);
-
+            
             return RedirectToAction("Index");
         }
     }

@@ -5,6 +5,6 @@ namespace GloboTicket.Integration.MessagingBus
 {
     public interface IMessageBus
     {
-        void  PublishMessage (IntegrationBaseMessage message, string topicName, string routingKey, string topicAddress = null);
+        void  PublishMessage (IntegrationBaseMessage message, string topicName, string queueName, string routingkey);
     }
 }
