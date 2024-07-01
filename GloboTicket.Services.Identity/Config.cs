@@ -39,6 +39,17 @@ namespace GloboTicket.Services.Identity
                     ClientSecrets = { new Secret("3416eeca-e569-44fe-a06e-b0eb0d70a855".Sha256())},
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
                     AllowedScopes = { "globoticket.fullaccess" }
+                },
+
+                new Client
+                {
+                     ClientName = "GloboTicket Interactive Client",
+                    ClientId = "globoticketinteractive",
+                    ClientSecrets = { new Secret("aed65b30-071f-4058-b42b-6ac0955ca3b9".Sha256())},
+                    AllowedGrantTypes = GrantTypes.Code,
+                    RedirectUris = {"https://localhost:5000/signin-oidc"},
+                    PostLogoutRedirectUris = {"https://localhost:5000/signout-callback-oidc"},
+                    AllowedScopes = { "openid", "profile"}
                 }
             };
     }

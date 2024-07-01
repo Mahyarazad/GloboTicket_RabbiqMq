@@ -1,11 +1,16 @@
 using GloboTicket.Web.Models;
 using GloboTicket.Web.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Linq.Expressions;
 
 namespace GloboTicket.Web
 {
@@ -22,14 +27,23 @@ namespace GloboTicket.Web
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var builder = services.AddControllersWithViews();
+            services.AddHttpContextAccessor();
+
+            var requireAuthenticatedUserPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+
+            var builder = services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add( new AuthorizeFilter(requireAuthenticatedUserPolicy));
+            });
 
             if (environment.IsDevelopment())
                 builder.AddRazorRuntimeCompilation();
 
-            services.AddHttpClient<IEventCatalogService, EventCatalogService>(c => 
+            services.AddHttpClient<IEventCatalogService, EventCatalogService>(c =>
                 c.BaseAddress = new Uri(config["ApiConfigs:EventCatalog:Uri"]));
-            services.AddHttpClient<IShoppingBasketService, ShoppingBasketService>(c => 
+            services.AddHttpClient<IShoppingBasketService, ShoppingBasketService>(c =>
                 c.BaseAddress = new Uri(config["ApiConfigs:ShoppingBasket:Uri"]));
             services.AddHttpClient<IOrderService, OrderService>(c =>
                 c.BaseAddress = new Uri(config["ApiConfigs:Order:Uri"]));
@@ -37,6 +51,24 @@ namespace GloboTicket.Web
                 c.BaseAddress = new Uri(config["ApiConfigs:Discount:Uri"]));
 
             services.AddSingleton<Settings>();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+
+            }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddOpenIdConnect(options =>
+                {
+                    options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.Authority = "https://localhost:5010";
+                    options.ClientId = "globoticketinteractive";
+                    options.ClientSecret = "aed65b30-071f-4058-b42b-6ac0955ca3b9";
+                    options.SaveTokens = true;
+                    options.GetClaimsFromUserInfoEndpoint = true;
+                    options.ResponseType = "code";
+                });
+
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -56,6 +88,7 @@ namespace GloboTicket.Web
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
