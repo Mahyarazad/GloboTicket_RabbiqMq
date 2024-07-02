@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using GloboTicket.Services.Identity.Services;
 using IdentityServer4;
 using IdentityServerHost.Quickstart.UI;
 using Microsoft.AspNetCore.Builder;
@@ -59,6 +60,8 @@ namespace GloboTicket.Services.Identity
             //        options.ClientId = "copy client ID from Google here";
             //        options.ClientSecret = "copy client secret from Google here";
             //    });
+
+            builder.AddExtensionGrantValidator<TokenExchangeExtentionGrantValidator>();
         }
 
         public void Configure(IApplicationBuilder app)
