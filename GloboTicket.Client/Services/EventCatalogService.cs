@@ -33,9 +33,9 @@ namespace GloboTicket.Web.Services
             var tokenResponse = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = discoveryDocumentResponse.TokenEndpoint,
-                ClientId = "globoticket",
+                ClientId = "globoticketclient",
                 ClientSecret = "aed65b30-071f-4058-b42b-6ac0955ca3b9",
-                Scope = "eventcatalog.fullaccess"
+                Scope = "eventcatalog.read"
             });
 
             if (tokenResponse.IsError)

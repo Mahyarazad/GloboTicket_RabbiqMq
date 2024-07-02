@@ -70,6 +70,8 @@ namespace GloboTicket.Web
                     options.Scope.Add("shoppingbasket.fullaccess");
                 });
 
+
+
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

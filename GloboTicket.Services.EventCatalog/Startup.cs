@@ -52,6 +52,11 @@ namespace GloboTicket.Services.EventCatalog
                     options.Authority = "https://localhost:5010";
                     options.Audience = "eventcatalog";
                 });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("CanRead", policy => policy.RequireClaim("scope", "eventcatalog.read"));
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

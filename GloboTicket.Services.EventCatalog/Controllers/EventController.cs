@@ -3,6 +3,7 @@ using GloboTicket.Integration.MessagingBus;
 using GloboTicket.Services.EventCatalog.Messages;
 using GloboTicket.Services.EventCatalog.Models;
 using GloboTicket.Services.EventCatalog.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace GloboTicket.Services.EventCatalog.Controllers
 {
     [Route("api/events")]
     [ApiController]
+    [Authorize(Policy = "CanRead")]
     public class EventController : ControllerBase
     {
         private readonly IEventRepository eventRepository;
