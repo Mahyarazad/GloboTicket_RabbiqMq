@@ -18,15 +18,20 @@ namespace GloboTicket.Services.Identity
         public static IEnumerable<ApiResource> ApiResources =>
                 new ApiResource[]
                 {
-                    new ApiResource("globoticket", "GlooTicket API")
+                    new ApiResource("eventcatalog", "Event Catalog API")
                     {
-                        Scopes = { "globoticket.fullaccess" }
+                        Scopes = { "eventcatalog.fullaccess" }
+                    },
+                    new ApiResource("shoppingbasket", "Shopping Basket API")
+                    {
+                        Scopes = { "shoppingbasket.fullaccess" }
                     }
                 };
         public static IEnumerable<ApiScope> ApiScopes =>
             new ApiScope[]
             {
-                new ApiScope("globoticket.fullaccess")
+                new ApiScope("eventcatalog.fullaccess"),
+                new ApiScope("shoppingbasket.fullaccess")
             };
 
         public static IEnumerable<Client> Clients =>
@@ -38,7 +43,7 @@ namespace GloboTicket.Services.Identity
                     ClientId = "globoticketm2m",
                     ClientSecrets = { new Secret("3416eeca-e569-44fe-a06e-b0eb0d70a855".Sha256())},
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
-                    AllowedScopes = { "globoticket.fullaccess" }
+                    AllowedScopes = { "eventcatalog.fullaccess" }
                 },
 
                 new Client
@@ -49,7 +54,17 @@ namespace GloboTicket.Services.Identity
                     AllowedGrantTypes = GrantTypes.Code,
                     RedirectUris = {"https://localhost:5000/signin-oidc"},
                     PostLogoutRedirectUris = {"https://localhost:5000/signout-callback-oidc"},
-                    AllowedScopes = { "openid", "profile", "globoticket.fullaccess" }
+                    AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess" }
+                },
+                new Client
+                {
+                    ClientName = "GloboTicket Client",
+                    ClientId = "globoticket",
+                    ClientSecrets = { new Secret ("aed65b30-071f-4058-b42b-6ac0955ca3b9".Sha256()) },
+                    AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
+                    RedirectUris = {"https://localhost:5000/signin-oidc"},
+                    PostLogoutRedirectUris = {"https://localhost:5000/signout-callback-oidc"},
+                    AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess", "eventcatalog.fullaccess" }
                 }
             };
     }

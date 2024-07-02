@@ -79,7 +79,7 @@ namespace GloboTicket.Services.ShoppingBasket
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                 options.Authority = "https://localhost:5010";
-                options.Audience = "globoticket";
+                options.Audience = "shoppingbasket";
             });
             
         }
