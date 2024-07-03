@@ -25,6 +25,10 @@ namespace GloboTicket.Services.Identity
                     new ApiResource("shoppingbasket", "Shopping Basket API")
                     {
                         Scopes = { "shoppingbasket.fullaccess" }
+                    },
+                    new ApiResource("discount", "Discount API")
+                    {
+                        Scopes = { "discount.fullaccess" }
                     }
                 };
         public static IEnumerable<ApiScope> ApiScopes =>
@@ -33,7 +37,8 @@ namespace GloboTicket.Services.Identity
                 new ApiScope("eventcatalog.fullaccess"),
                 new ApiScope("shoppingbasket.fullaccess"), 
                 new ApiScope("eventcatalog.read"),
-                new ApiScope("eventcatalog.write")
+                new ApiScope("eventcatalog.write"),
+                new ApiScope("discount.fullaccess")
             };
 
         public static IEnumerable<Client> Clients =>
@@ -42,7 +47,7 @@ namespace GloboTicket.Services.Identity
                 new Client
                 {
                     ClientName = "GloboTicket Machine 2 Machine Client",
-                    ClientId = "globoticketm2m",
+                    ClientId = "globoticket",
                     ClientSecrets = { new Secret("3416eeca-e569-44fe-a06e-b0eb0d70a855".Sha256())},
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
                     AllowedScopes = { "eventcatalog.fullaccess" }
@@ -67,7 +72,16 @@ namespace GloboTicket.Services.Identity
                     RedirectUris = {"https://localhost:5000/signin-oidc"},
                     PostLogoutRedirectUris = {"https://localhost:5000/signout-callback-oidc"},
                     AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess", "eventcatalog.read", "eventcatalog.write" }
-                }
+                },
+                new Client
+                {
+                    ClientName = "Shopping Basket Token Exchange Client",
+                    ClientId = "shoppingbaskettodownstreamtokenexchangeclient",
+                    ClientSecrets = { new Secret ("aed65b30-071f-4058-b42b-6ac0955ca3b9".Sha256()) },
+                    AllowedGrantTypes = new [] { "urn:ietf:params:oauth:grant-type:token-exchange"},
+                    AllowedScopes = { "openid", "profile", "discount.fullaccess" }
+                },
+
             };
     }
 }
