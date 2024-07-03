@@ -21,22 +21,22 @@ namespace GloboTicket.Services.Identity.Services
 
         public async Task ValidateAsync(ExtensionGrantValidationContext context)
         {
-            var requestToken = context.Request.Raw.Get("grant-type");
-            if (string.IsNullOrEmpty(requestToken) || requestToken != GrantType)
+            var requestToken = context.Request.Raw.Get("grant_type");
+            if (string.IsNullOrWhiteSpace(requestToken) || requestToken != GrantType)
             {
                 context.Result = new GrantValidationResult(TokenRequestErrors.InvalidGrant, "Invalid Grant");
                 return;
             }
 
-            var subjectToken = context.Request.Raw.Get("subject-token");
-            if (string.IsNullOrEmpty(subjectToken))
+            var subjectToken = context.Request.Raw.Get("subject_token");
+            if (string.IsNullOrWhiteSpace(subjectToken))
             {
                 context.Result = new GrantValidationResult(TokenRequestErrors.InvalidRequest, "Subject token missing");
                 return;
             }
 
-            var subjectTokenType = context.Request.Raw.Get("subject-token-type");
-            if (string.IsNullOrEmpty(subjectTokenType))
+            var subjectTokenType = context.Request.Raw.Get("subject_token_type");
+            if (string.IsNullOrWhiteSpace(subjectTokenType))
             {
                 context.Result = new GrantValidationResult(TokenRequestErrors.InvalidRequest, "Subject token type missing");
                 return;
@@ -62,7 +62,7 @@ namespace GloboTicket.Services.Identity.Services
                 return;
             }
 
-            context.Result = new GrantValidationResult(subjectClaim.Value, "access-token", result.Claims);
+            context.Result = new GrantValidationResult(subjectClaim.Value, "access_token", result.Claims);
 
         }
     }
