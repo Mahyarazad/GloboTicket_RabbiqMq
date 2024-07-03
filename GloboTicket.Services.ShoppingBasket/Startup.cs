@@ -40,7 +40,7 @@ namespace GloboTicket.Services.ShoppingBasket
                 options.Filters.Add( new AuthorizeFilter(requireAuthorizeUserPolicy));
             });
 
-
+            services.AddHttpContextAccessor();
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
