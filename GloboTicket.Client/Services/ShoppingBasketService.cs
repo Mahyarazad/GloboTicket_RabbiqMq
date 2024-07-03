@@ -27,17 +27,56 @@ namespace GloboTicket.Web.Services
 
         public async Task<BasketLine> AddToBasket(Guid basketId, BasketLineForCreation basketLine)
         {
+            //if (basketId == Guid.Empty)
+            //{
+            //    string UserID = "";
+            //    var accessToken = await httpContextAccessor.HttpContext.GetTokenAsync("access_token");
+            //    var discoveryDocumentResponse = await client.GetDiscoveryDocumentAsync("https://localhost:5010");
+            //    if (discoveryDocumentResponse.IsError)
+            //    {
+            //        throw new Exception(discoveryDocumentResponse.Error);
+            //    }
+
+            //    if (httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier").Value is null)
+            //    {
+            //    }
+
+            //    var userResponse = await client.GetUserInfoAsync(new UserInfoRequest()
+            //    {
+            //        Address = discoveryDocumentResponse.UserInfoEndpoint,
+            //        Token = accessToken,
+            //    });
+            //    UserID = userResponse.Claims.FirstOrDefault(c => c.Type == "sub").Value;
+
+
+            //    client.SetBearerToken(accessToken);
+            //    var basketResponse = await client.PostAsJson("/api/baskets", new BasketForCreation { UserId = Guid.Parse(UserID) });
+            //    var basket = await basketResponse.ReadContentAs<Basket>();
+            //    basketId = basket.BasketId;
+            //}
+
+            //client.SetBearerToken(await httpContextAccessor.HttpContext.GetTokenAsync("access_token"));
+            //var response = await client.PostAsJson($"api/baskets/{basketId}/basketlines", basketLine);
+            //return await response.ReadContentAs<BasketLine>();
+
             var token = await httpContextAccessor.HttpContext.GetTokenAsync("access_token");
+
             if (basketId == Guid.Empty)
             {
-                client.SetBearerToken(await httpContextAccessor.HttpContext.GetTokenAsync("access_token"));
-                var basketResponse = await client.PostAsJson("/api/baskets", new BasketForCreation { UserId = Guid.Parse(
-                    httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier").Value) });
+                client.SetBearerToken(token);
+                var basketResponse = await client.PostAsJson("/api/baskets",
+                    new BasketForCreation
+                    {
+                        UserId =
+                    Guid.Parse(
+                        httpContextAccessor.HttpContext
+                        .User.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value)
+                    });
                 var basket = await basketResponse.ReadContentAs<Basket>();
                 basketId = basket.BasketId;
             }
 
-            client.SetBearerToken(await httpContextAccessor.HttpContext.GetTokenAsync("access_token"));
+            client.SetBearerToken(token);
             var response = await client.PostAsJson($"api/baskets/{basketId}/basketlines", basketLine);
             return await response.ReadContentAs<BasketLine>();
         }

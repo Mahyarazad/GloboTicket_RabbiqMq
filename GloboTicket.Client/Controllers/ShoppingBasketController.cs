@@ -13,14 +13,12 @@ namespace GloboTicket.Web.Controllers
     public class ShoppingBasketController : Controller
     {
         private readonly IShoppingBasketService basketService;
-        private readonly IDiscountService discountService;
         private readonly Settings settings;
 
-        public ShoppingBasketController(IShoppingBasketService basketService, Settings settings, IDiscountService discountService)
+        public ShoppingBasketController(IShoppingBasketService basketService, Settings settings)
         {
             this.basketService = basketService;
             this.settings = settings;
-            this.discountService = discountService;
         }
 
         public async Task<IActionResult> Index()
@@ -53,16 +51,6 @@ namespace GloboTicket.Web.Controllers
                 BasketLines = lineViewModels.ToList()
             };
 
-            Coupon coupon = null;
-
-            if (basket.CouponId.HasValue)
-                coupon = await discountService.GetCouponById(basket.CouponId.Value);
-
-            if (coupon != null)
-            {
-                basketViewModel.Code = coupon.Code;
-                basketViewModel.Discount = coupon.Amount;
-            }
 
             basketViewModel.ShoppingCartTotal = basketViewModel.BasketLines.Sum(bl => bl.Price * bl.Quantity);
 
@@ -141,23 +129,7 @@ namespace GloboTicket.Web.Controllers
             }
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ApplyDiscountCode(string code)
-        {
-            var coupon = await discountService.GetCouponByCode(code);
-
-            if (coupon == null || coupon.AlreadyUsed) return RedirectToAction("Index");
-
-            //coupon will be applied to the basket
-            var basketId = Request.Cookies.GetCurrentBasketId(settings);
-            await basketService.ApplyCouponToBasket(basketId, new CouponForUpdate() { CouponId = coupon.CouponId });
-            await discountService.UseCoupon(coupon.CouponId);
-
-            return RedirectToAction("Index");
-
-        }
-
+        
         public IActionResult CheckoutComplete()
         {
             return View();

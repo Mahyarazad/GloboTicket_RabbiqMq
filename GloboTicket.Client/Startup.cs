@@ -47,8 +47,6 @@ namespace GloboTicket.Web
                 c.BaseAddress = new Uri(config["ApiConfigs:ShoppingBasket:Uri"]));
             services.AddHttpClient<IOrderService, OrderService>(c =>
                 c.BaseAddress = new Uri(config["ApiConfigs:Order:Uri"]));
-            services.AddHttpClient<IDiscountService, DiscountService>(c =>
-                c.BaseAddress = new Uri(config["ApiConfigs:Discount:Uri"]));
 
             services.AddSingleton<Settings>();
 
@@ -68,6 +66,7 @@ namespace GloboTicket.Web
                     options.GetClaimsFromUserInfoEndpoint = true;
                     options.ResponseType = "code";
                     options.Scope.Add("shoppingbasket.fullaccess");
+                    options.Scope.Add("eventcatalog.read");
                 });
 
 
