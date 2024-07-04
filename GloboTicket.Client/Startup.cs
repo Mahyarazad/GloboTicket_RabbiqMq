@@ -66,7 +66,7 @@ namespace GloboTicket.Web
                     options.GetClaimsFromUserInfoEndpoint = true;
                     options.ResponseType = "code";
                     options.Scope.Add("shoppingbasket.fullaccess");
-                    options.Scope.Add("eventcatalog.read");
+                    options.Scope.Add("globoticket.fullaccess");
                 });
 
 

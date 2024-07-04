@@ -51,28 +51,28 @@ namespace GloboTicket.Web.Services
         public async Task<IEnumerable<Event>> GetAll()
         {
             client.SetBearerToken(await GetToken());
-            var response = await client.GetAsync("/api/events");
+            var response = await client.GetAsync("api/events");
             return await response.ReadContentAs<List<Event>>();
         }
 
         public async Task<IEnumerable<Event>> GetByCategoryId(Guid categoryid)
         {
             client.SetBearerToken(await GetToken());
-            var response = await client.GetAsync($"/api/events/?categoryId={categoryid}");
+            var response = await client.GetAsync($"api/events/?categoryId={categoryid}");
             return await response.ReadContentAs<List<Event>>();
         }
 
         public async Task<Event> GetEvent(Guid id)
         {
             client.SetBearerToken(await GetToken());
-            var response = await client.GetAsync($"/api/events/{id}");
+            var response = await client.GetAsync($"api/events/{id}");
             return await response.ReadContentAs<Event>();
         }
 
         public async Task<IEnumerable<Category>> GetCategories()
         {
             client.SetBearerToken(await GetToken());
-            var response = await client.GetAsync("/api/categories");
+            var response = await client.GetAsync("api/categories");
             return await response.ReadContentAs<List<Category>>();
         }
 
