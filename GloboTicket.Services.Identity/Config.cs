@@ -29,6 +29,10 @@ namespace GloboTicket.Services.Identity
                     new ApiResource("discount", "Discount API")
                     {
                         Scopes = { "discount.fullaccess" }
+                    },
+                    new ApiResource("globoticketgateway", "GloboTicket Gateway")
+                    {
+                        Scopes = { "globoticket.fullaccess" }
                     }
                 };
         public static IEnumerable<ApiScope> ApiScopes =>
@@ -38,7 +42,8 @@ namespace GloboTicket.Services.Identity
                 new ApiScope("shoppingbasket.fullaccess"), 
                 new ApiScope("eventcatalog.read"),
                 new ApiScope("eventcatalog.write"),
-                new ApiScope("discount.fullaccess")
+                new ApiScope("discount.fullaccess"),
+                new ApiScope("globoticket.fullaccess")
             };
 
         public static IEnumerable<Client> Clients =>
@@ -71,7 +76,7 @@ namespace GloboTicket.Services.Identity
                     AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
                     RedirectUris = {"https://localhost:5000/signin-oidc"},
                     PostLogoutRedirectUris = {"https://localhost:5000/signout-callback-oidc"},
-                    AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess", "eventcatalog.read", "eventcatalog.write" }
+                    AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess", "eventcatalog.read", "eventcatalog.write", "globoticket.fullaccess" }
                 },
                 new Client
                 {
