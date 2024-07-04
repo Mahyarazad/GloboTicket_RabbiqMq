@@ -76,7 +76,7 @@ namespace GloboTicket.Services.Identity
                     AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
                     RedirectUris = {"https://localhost:5000/signin-oidc"},
                     PostLogoutRedirectUris = {"https://localhost:5000/signout-callback-oidc"},
-                    AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess", "eventcatalog.fullaccess", "globoticket.fullaccess" }
+                    AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess", "globoticket.fullaccess" }
                 },
                 new Client
                 {
@@ -85,6 +85,15 @@ namespace GloboTicket.Services.Identity
                     ClientSecrets = { new Secret ("aed65b30-071f-4058-b42b-6ac0955ca3b9".Sha256()) },
                     AllowedGrantTypes = new [] { "urn:ietf:params:oauth:grant-type:token-exchange"},
                     AllowedScopes = { "openid", "profile", "discount.fullaccess" }
+                },
+
+                new Client
+                {
+                    ClientName = "GloboTicket Gateway DownStream Token Exchange Client",
+                    ClientId = "globoticketgatewaydownstreamtokenexchangeclient",
+                    ClientSecrets = { new Secret ("aed65b30-071f-4058-b42b-6ac0955ca3b9".Sha256()) },
+                    AllowedGrantTypes = new [] { "urn:ietf:params:oauth:grant-type:token-exchange"},
+                    AllowedScopes = { "openid", "profile", "eventcatalog.fullaccess" }
                 },
 
             };

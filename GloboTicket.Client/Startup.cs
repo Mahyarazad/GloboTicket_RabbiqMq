@@ -65,9 +65,9 @@ namespace GloboTicket.Web
                     options.SaveTokens = true;
                     options.GetClaimsFromUserInfoEndpoint = true;
                     options.ResponseType = "code";
-                    options.Scope.Add("shoppingbasket.fullaccess");
+                    //options.Scope.Add("shoppingbasket.fullaccess");
                     options.Scope.Add("globoticket.fullaccess");
-                    options.Scope.Add("eventcatalog.fullaccess");
+                    //options.Scope.Add("eventcatalog.fullaccess");
                 });
 
 

@@ -1,9 +1,12 @@
+using GloboTicket.Gateway.DelegatingHandlers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
+using Ocelot.Values;
 using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpClient();
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -15,7 +18,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.Authority = "https://localhost:5010";
     });
 
-builder.Services.AddOcelot();
+builder.Services.AddScoped<TokenExchangeDelegate>();
+builder.Services.AddOcelot().AddDelegatingHandler<TokenExchangeDelegate>();
 
 var app = builder.Build();
 
