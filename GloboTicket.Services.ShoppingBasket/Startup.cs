@@ -32,14 +32,6 @@ namespace GloboTicket.Services.ShoppingBasket
 
         public void ConfigureServices(IServiceCollection services)
         {
-
-            var requireAuthorizeUserPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-
-            services.AddControllers(options =>
-            {
-                options.Filters.Add( new AuthorizeFilter(requireAuthorizeUserPolicy));
-            });
-
             services.AddHttpContextAccessor();
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -81,7 +73,14 @@ namespace GloboTicket.Services.ShoppingBasket
                 options.Authority = "https://localhost:5010";
                 options.Audience = "shoppingbasket";
             });
-            
+
+
+            var requireAuthorizeUserPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+
+            services.AddControllers(options =>
+            {
+                options.Filters.Add(new AuthorizeFilter(requireAuthorizeUserPolicy));
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -20,7 +20,7 @@ namespace GloboTicket.Services.Identity
                 {
                     new ApiResource("eventcatalog", "Event Catalog API")
                     {
-                        Scopes = { "eventcatalog.read", "eventcatalog.write" }
+                        Scopes = { "eventcatalog.fullaccess" }
                     },
                     new ApiResource("shoppingbasket", "Shopping Basket API")
                     {
@@ -76,7 +76,7 @@ namespace GloboTicket.Services.Identity
                     AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
                     RedirectUris = {"https://localhost:5000/signin-oidc"},
                     PostLogoutRedirectUris = {"https://localhost:5000/signout-callback-oidc"},
-                    AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess", "eventcatalog.read", "eventcatalog.write", "globoticket.fullaccess" }
+                    AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess", "eventcatalog.fullaccess", "globoticket.fullaccess" }
                 },
                 new Client
                 {

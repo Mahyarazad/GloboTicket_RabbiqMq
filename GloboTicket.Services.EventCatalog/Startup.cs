@@ -33,14 +33,12 @@ namespace GloboTicket.Services.EventCatalog
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IEventRepository, EventRepository>();
 
-            var requireAuthenticatedUserPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddSingleton<IMessageBus, RabbitMqMessageServiceBus>();
 
 
-            services.AddControllers(configure => configure.Filters.Add(new AuthorizeFilter(requireAuthenticatedUserPolicy)));
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "EventDto Catalog API", Version = "v1" });
@@ -53,10 +51,13 @@ namespace GloboTicket.Services.EventCatalog
                     options.Audience = "eventcatalog";
                 });
 
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("CanRead", policy => policy.RequireClaim("scope", "eventcatalog.read"));
-            });
+            var requireAuthenticatedUserPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+            services.AddControllers(configure => configure.Filters.Add(new AuthorizeFilter(requireAuthenticatedUserPolicy)));
+
+            //services.AddAuthorization(options =>
+            //{
+            //    options.AddPolicy("CanRead", policy => policy.RequireClaim("scope", "eventcatalog.read"));
+            //});
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
