@@ -32,7 +32,7 @@ namespace GloboTicket.Services.Identity
                     },
                     new ApiResource("globoticketgateway", "GloboTicket Gateway")
                     {
-                        Scopes = { "globoticket.fullaccess" }
+                        Scopes = { "globoticketgateway.fullaccess" }
                     }
                 };
         public static IEnumerable<ApiScope> ApiScopes =>
@@ -43,7 +43,7 @@ namespace GloboTicket.Services.Identity
                 new ApiScope("eventcatalog.read"),
                 new ApiScope("eventcatalog.write"),
                 new ApiScope("discount.fullaccess"),
-                new ApiScope("globoticket.fullaccess")
+                new ApiScope("globoticketgateway.fullaccess")
             };
 
         public static IEnumerable<Client> Clients =>
@@ -52,7 +52,7 @@ namespace GloboTicket.Services.Identity
                 new Client
                 {
                     ClientName = "GloboTicket Machine 2 Machine Client",
-                    ClientId = "globoticket",
+                    ClientId = "globoticketm2m",
                     ClientSecrets = { new Secret("3416eeca-e569-44fe-a06e-b0eb0d70a855".Sha256())},
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
                     AllowedScopes = { "eventcatalog.fullaccess" }
@@ -71,12 +71,15 @@ namespace GloboTicket.Services.Identity
                 new Client
                 {
                     ClientName = "GloboTicket Client",
-                    ClientId = "globoticketclient",
+                    ClientId = "globoticket",
                     ClientSecrets = { new Secret ("aed65b30-071f-4058-b42b-6ac0955ca3b9".Sha256()) },
                     AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
                     RedirectUris = {"https://localhost:5000/signin-oidc"},
                     PostLogoutRedirectUris = {"https://localhost:5000/signout-callback-oidc"},
-                    AllowedScopes = { "openid", "profile", "shoppingbasket.fullaccess", "globoticket.fullaccess" }
+                    AllowedScopes = { "openid", "profile", "globoticketgateway.fullaccess","shoppingbasket.fullaccess" },
+                    //RequireConsent = false,
+                    //AllowOfflineAccess = true,
+                    //AccessTokenLifetime = 60
                 },
                 new Client
                 {

@@ -33,6 +33,7 @@ namespace GloboTicket.Web
                 .RequireAuthenticatedUser()
                 .Build();
 
+
             var builder = services.AddControllersWithViews(options =>
             {
                 options.Filters.Add( new AuthorizeFilter(requireAuthenticatedUserPolicy));
@@ -41,12 +42,13 @@ namespace GloboTicket.Web
             if (environment.IsDevelopment())
                 builder.AddRazorRuntimeCompilation();
 
+            services.AddAccessTokenManagement();
             services.AddHttpClient<IEventCatalogService, EventCatalogService>(c =>
-                c.BaseAddress = new Uri(config["ApiConfigs:EventCatalog:Uri"]));
+                c.BaseAddress = new Uri(config["ApiConfigs:EventCatalog:Uri"])).AddUserAccessTokenHandler();
             services.AddHttpClient<IShoppingBasketService, ShoppingBasketService>(c =>
-                c.BaseAddress = new Uri(config["ApiConfigs:ShoppingBasket:Uri"]));
+                c.BaseAddress = new Uri(config["ApiConfigs:ShoppingBasket:Uri"])).AddUserAccessTokenHandler();
             services.AddHttpClient<IOrderService, OrderService>(c =>
-                c.BaseAddress = new Uri(config["ApiConfigs:Order:Uri"]));
+                c.BaseAddress = new Uri(config["ApiConfigs:Order:Uri"])).AddUserAccessTokenHandler();
 
             services.AddSingleton<Settings>();
 
@@ -60,13 +62,13 @@ namespace GloboTicket.Web
                 {
                     options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.Authority = "https://localhost:5010";
-                    options.ClientId = "globoticketclient";
+                    options.ClientId = "globoticket";
                     options.ClientSecret = "aed65b30-071f-4058-b42b-6ac0955ca3b9";
                     options.SaveTokens = true;
                     options.GetClaimsFromUserInfoEndpoint = true;
                     options.ResponseType = "code";
-                    //options.Scope.Add("shoppingbasket.fullaccess");
-                    options.Scope.Add("globoticket.fullaccess");
+                    options.Scope.Add("shoppingbasket.fullaccess");
+                    options.Scope.Add("globoticketgateway.fullaccess");
                     //options.Scope.Add("eventcatalog.fullaccess");
                 });
 

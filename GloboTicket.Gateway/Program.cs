@@ -7,7 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient();
-
+builder.Services.AddAccessTokenManagement();
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var autheticationScheme = "GloboTicketGatewayAuthenticationScheme";
