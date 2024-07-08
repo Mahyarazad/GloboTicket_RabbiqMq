@@ -1,4 +1,5 @@
 ﻿using GloboTicket.Integration;
+using GloboTicket.Integration.Messages;
 using GloboTicket.Integration.MessagingBus;
 using GloboTicket.Services.Payment.Messages;
 using GloboTicket.Services.Payment.Model;
@@ -7,6 +8,7 @@ using GloboTicket.Services.Payment.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
@@ -100,11 +102,11 @@ namespace GloboTicket.Services.Payment.Worker
 
             try
             {
-                messageBus.PublishMessage(orderPaymentUpdateMessage, configuration.GetValue<string>("Topic_Name"), "orderpaymentrequestmessage", "payment.order");
+                await messageBus.PublishMessage(orderPaymentUpdateMessage, configuration.GetValue<string>("Topic_Name"), "orderpaymentrequestmessage", "payment.order");
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine(e.Message);
                 throw;
             }
 

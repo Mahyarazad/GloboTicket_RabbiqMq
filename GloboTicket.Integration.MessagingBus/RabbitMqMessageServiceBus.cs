@@ -1,6 +1,8 @@
 ﻿using GloboTicket.Integration.Messages;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using System;
+using System.Threading.Tasks;
 
 namespace GloboTicket.Integration.MessagingBus
 {
@@ -13,6 +15,7 @@ namespace GloboTicket.Integration.MessagingBus
             // read from secret
             var connectionFactory = new ConnectionFactory()
             {
+                ClientProvidedName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name,
                 HostName = "localhost",
                 Port = 5672,
                 UserName = "guest",
@@ -22,7 +25,7 @@ namespace GloboTicket.Integration.MessagingBus
             _connection = connectionFactory.CreateConnection();
             _client = _connection.CreateModel();
         }
-        public void PublishMessage(IntegrationBaseMessage message, string topicName, string queueName ,string routingkey)
+        public Task PublishMessage(IntegrationBaseMessage message, string topicName, string queueName ,string routingkey)
         {
             _client.ExchangeDeclare(topicName, type: ExchangeType.Topic);
             _client.QueueDeclare(queueName, true, false, false, null);
@@ -32,7 +35,9 @@ namespace GloboTicket.Integration.MessagingBus
 
 
             _client.BasicPublish(topicName, routingkey, properties, Serializer<IntegrationBaseMessage>.Serialize(message));
-            Console.WriteLine($"Sent message to {topicName}");          
+            ConsoleHelper.WriteLine(JsonConvert.SerializeObject(message), ConsoleHelper.MessageType.Published);
+
+            return Task.CompletedTask;
         }
     }
 }

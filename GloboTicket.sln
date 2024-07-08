@@ -35,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GloboTicket.Services.Identi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gateway", "Gateway", "{AB425B7F-2E68-474F-BCDD-64F99B97F31D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GloboTicket.Gateway", "GloboTicket.Gateway\GloboTicket.Gateway.csproj", "{4FE06A10-E2B8-4497-A75E-4C6B3031C6F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GloboTicket.Gateway", "GloboTicket.Gateway\GloboTicket.Gateway.csproj", "{4FE06A10-E2B8-4497-A75E-4C6B3031C6F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
