@@ -10,15 +10,18 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+using AutoMapper.Configuration;
 
 namespace GloboTicket.Services.Identity
 {
     public class Startup
     {
         public IWebHostEnvironment Environment { get; }
-        public IConfiguration Configuration { get; }
+        public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; }
 
-        public Startup(IWebHostEnvironment environment, IConfiguration configuration)
+        public Startup(IWebHostEnvironment environment, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             Environment = environment;
             Configuration = configuration;
@@ -27,6 +30,7 @@ namespace GloboTicket.Services.Identity
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+            var migrationAssembly = typeof(Startup).Assembly.GetName().Name;
 
             var builder = services.AddIdentityServer(options =>
             {
@@ -37,18 +41,27 @@ namespace GloboTicket.Services.Identity
 
                 // see https://identityserver4.readthedocs.io/en/latest/topics/resources.html
                 options.EmitStaticAudienceClaim = true;
-            })
-                .AddTestUsers(TestUsers.Users);
+            }).AddTestUsers(TestUsers.Users)
+            .AddConfigurationStore(options =>
+            {
+                options.ConfigureDbContext = db =>
+                    db.UseSqlServer(connectionString: Configuration["ConnectionStrings:IdentityServer"], sql => sql.MigrationsAssembly(migrationAssembly));
+            }).AddOperationalStore(options =>
+            {
+                options.ConfigureDbContext = db =>
+                    db.UseSqlServer(connectionString: Configuration["ConnectionStrings:IdentityServer"], sql => sql.MigrationsAssembly(migrationAssembly));
+            });
+
+
 
             // in-memory, code config
             builder.AddInMemoryIdentityResources(Config.IdentityResources);
             builder.AddInMemoryApiScopes(Config.ApiScopes);
             builder.AddInMemoryApiResources(Config.ApiResources);
             builder.AddInMemoryClients(Config.Clients);
-
+            builder.AddInMemoryCaching();
             // not recommended for production - you need to store your key material somewhere secure
             builder.AddDeveloperSigningCredential();
-
             //services.AddAuthentication()
             //    .AddGoogle(options =>
             //    {
@@ -66,6 +79,7 @@ namespace GloboTicket.Services.Identity
 
         public void Configure(IApplicationBuilder app)
         {
+            InitializeDatabase.DatabaseInit(app);
             if (Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
